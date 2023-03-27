@@ -74,11 +74,11 @@ def data_preprocess(
     # Remove outliers from dataset
     #########################
     
-    no = ori_data.shape[0]
-    z_scores = stats.zscore(ori_data, axis=0, nan_policy='omit')
-    z_filter = np.nanmax(np.abs(z_scores), axis=1) < 3
-    ori_data = ori_data[z_filter]
-    print(f"Dropped {no - ori_data.shape[0]} rows (outliers)\n")
+    # no = ori_data.shape[0]
+    # z_scores = stats.zscore(ori_data, axis=0, nan_policy='omit')
+    # z_filter = np.nanmax(np.abs(z_scores), axis=1) < 3
+    # ori_data = ori_data[z_filter]
+    # print(f"Dropped {no - ori_data.shape[0]} rows (outliers)\n")
 
     # Parameters
     uniq_id = np.unique(ori_data[index])
@@ -119,6 +119,14 @@ def data_preprocess(
     output.fill(padding_value)
     time = []
 
+    timeseries1 = np.vstack([
+        np.sin(np.linspace(0, 2*np.pi, 24))**2 for _ in range(dim)
+    ]).T
+
+    timeseries2 = np.vstack([
+        np.cos(np.linspace(0, 2*np.pi, 24))**2 for _ in range(dim)
+    ]).T
+
     # For each uniq id
     for i in tqdm(range(no)):
         # Extract the time-series data with a certain admissionid
@@ -136,11 +144,20 @@ def data_preprocess(
 
         # Pad data to `max_seq_len`
         if curr_no >= max_seq_len:
-            output[i, :, :] = curr_data[:max_seq_len, 1:]  # Shape: [1, max_seq_len, dim]
+            #output[i, :, :] = curr_data[:max_seq_len, 1:]  # Shape: [1, max_seq_len, dim]
+            if np.random.rand() > 0.5:
+                output[i, :, :] = timeseries1
+            else:
+                output[i, :, :] = timeseries2
+            
             time.append(max_seq_len)
         else:
-            output[i, :curr_no, :] = curr_data[:, 1:]  # Shape: [1, max_seq_len, dim]
+            # output[i, :curr_no, :] = curr_data[:, 1:]  # Shape: [1, max_seq_len, dim]
             time.append(curr_no)
+            if np.random.rand() > 0.5:
+                output[i, :curr_no, :] = timeseries1
+            else:
+                output[i, :curr_no, :] = timeseries2
 
     return output, time, params, max_seq_len, padding_value
 
